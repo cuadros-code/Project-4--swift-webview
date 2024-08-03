@@ -11,6 +11,11 @@ import WebKit
 class ViewController: UIViewController, WKNavigationDelegate {
     
     var webView: WKWebView!
+    var progressView: UIProgressView!
+    
+    deinit {
+        webView.removeObserver(self, forKeyPath: "estimatedProgress")
+    }
     
     override func loadView() {
         webView = WKWebView()
@@ -27,6 +32,33 @@ class ViewController: UIViewController, WKNavigationDelegate {
             target: self,
             action: #selector(opentapped)
         )
+        
+        let spacer = UIBarButtonItem(
+            barButtonSystemItem: .flexibleSpace, 
+            target: nil,
+            action: nil
+        )
+        
+        let refresh = UIBarButtonItem(
+            barButtonSystemItem: .refresh,
+            target: webView,
+            action: #selector(webView.reload)
+        )
+        
+        progressView = UIProgressView(progressViewStyle: .default)
+        progressView.sizeToFit()
+        let progressButton = UIBarButtonItem(customView: progressView)
+        
+        toolbarItems = [ progressButton, spacer, refresh]
+        navigationController?.isToolbarHidden = false
+        
+        webView.addObserver(
+            self,
+            forKeyPath: "estimatedProgress",
+            options: .new,
+            context: nil
+        )
+
         
         let url = URL(string: "https://www.google.com")!
         webView.load(URLRequest(url: url))
@@ -67,6 +99,11 @@ class ViewController: UIViewController, WKNavigationDelegate {
         title = webView.title
     }
     
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if keyPath == "estimatedProgress" {
+            progressView.progress = Float(webView.estimatedProgress)
+        }
+    }
 
 }
 
