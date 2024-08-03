@@ -12,6 +12,7 @@ class ViewController: UIViewController, WKNavigationDelegate {
     
     var webView: WKWebView!
     var progressView: UIProgressView!
+    var websites = ["google.com", "apple.com", "kevincuadros.com"]
     
     deinit {
         webView.removeObserver(self, forKeyPath: "estimatedProgress")
@@ -60,7 +61,7 @@ class ViewController: UIViewController, WKNavigationDelegate {
         )
 
         
-        let url = URL(string: "https://www.google.com")!
+        let url = URL(string: "https://" + websites[0])!
         webView.load(URLRequest(url: url))
         webView.allowsBackForwardNavigationGestures = true
     }
@@ -71,16 +72,15 @@ class ViewController: UIViewController, WKNavigationDelegate {
             message: nil,
             preferredStyle: .actionSheet
         )
-        ac.addAction(UIAlertAction(
-            title: "apple.com",
-            style: .default,
-            handler: openPage
-        ))
-        ac.addAction(UIAlertAction(
-            title: "kevincuadros.com",
-            style: .default,
-            handler: openPage
-        ))
+        
+        for website in websites {
+            ac.addAction(UIAlertAction(
+                title: website,
+                style: .default,
+                handler: openPage
+            ))
+        }
+        
         ac.addAction(UIAlertAction(
             title: "Cancel",
             style: .cancel
@@ -99,10 +99,49 @@ class ViewController: UIViewController, WKNavigationDelegate {
         title = webView.title
     }
     
-    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+    override func observeValue(
+        forKeyPath keyPath: String?,
+        of object: Any?,
+        change: [NSKeyValueChangeKey : Any]?, 
+        context: UnsafeMutableRawPointer?
+    ) {
         if keyPath == "estimatedProgress" {
             progressView.progress = Float(webView.estimatedProgress)
         }
+    }
+    
+    func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationAction: WKNavigationAction, 
+        decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+    ) {
+        let url = navigationAction.request.url
+        
+        if let host = url?.host {
+            for website in websites {
+                if host.contains(website) {
+                    decisionHandler(.allow)
+                    return
+                }
+            }
+        }
+        
+        decisionHandler(.cancel)
+        alertDontNavigate()
+    }
+    
+    
+    func alertDontNavigate() {
+        let ac = UIAlertController(
+            title: "Don't leave of this page",
+            message: nil,
+            preferredStyle: .alert
+        )
+        ac.addAction(UIAlertAction(
+            title: "Close",
+            style: .cancel
+        ))
+        present(ac, animated: true)
     }
 
 }
