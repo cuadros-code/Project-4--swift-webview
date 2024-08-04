@@ -12,7 +12,7 @@ class ViewController: UIViewController, WKNavigationDelegate {
     
     var webView: WKWebView!
     var progressView: UIProgressView!
-    var websites = ["google.com", "apple.com", "kevincuadros.com"]
+    var websites = ["google.com", "hackingwithswift.com", "kevincuadros.com"]
     
     deinit {
         webView.removeObserver(self, forKeyPath: "estimatedProgress")
@@ -46,11 +46,25 @@ class ViewController: UIViewController, WKNavigationDelegate {
             action: #selector(webView.reload)
         )
         
+        // Try making two new toolbar items with the
+        // titles Back and Forward. You should make
+        // them use webView.goBack and webView.goForward.
+        let back = UIBarButtonItem(
+            barButtonSystemItem: .fastForward,
+            target: webView,
+            action: #selector(webView.goBack)
+        )
+        let forward = UIBarButtonItem(
+            barButtonSystemItem: .camera,
+            target: webView,
+            action: #selector(webView.goForward)
+        )
+        
         progressView = UIProgressView(progressViewStyle: .default)
         progressView.sizeToFit()
         let progressButton = UIBarButtonItem(customView: progressView)
         
-        toolbarItems = [ progressButton, spacer, refresh]
+        toolbarItems = [progressButton, spacer, back, forward, refresh]
         navigationController?.isToolbarHidden = false
         
         webView.addObserver(
@@ -64,6 +78,26 @@ class ViewController: UIViewController, WKNavigationDelegate {
         let url = URL(string: "https://" + websites[0])!
         webView.load(URLRequest(url: url))
         webView.allowsBackForwardNavigationGestures = true
+    }
+    
+    func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationAction: WKNavigationAction,
+        decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+    ) {
+        let url = navigationAction.request.url
+        
+        if let host = url?.host {
+            for website in websites {
+                if host.contains(website) {
+                    decisionHandler(.allow)
+                    return
+                }
+            }
+        }
+        
+        decisionHandler(.cancel)
+        webIsBlocked()
     }
     
     @objc func opentapped() {
@@ -110,38 +144,19 @@ class ViewController: UIViewController, WKNavigationDelegate {
         }
     }
     
-    func webView(
-        _ webView: WKWebView,
-        decidePolicyFor navigationAction: WKNavigationAction, 
-        decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
-    ) {
-        let url = navigationAction.request.url
-        
-        if let host = url?.host {
-            for website in websites {
-                if host.contains(website) {
-                    decisionHandler(.allow)
-                    return
-                }
-            }
-        }
-        
-        decisionHandler(.cancel)
-        alertDontNavigate()
-    }
-    
-    
-    func alertDontNavigate() {
-        let ac = UIAlertController(
-            title: "Don't leave of this page",
+    func webIsBlocked() {
+        let alertController = UIAlertController(
+            title: "site is blocked",
             message: nil,
             preferredStyle: .alert
         )
-        ac.addAction(UIAlertAction(
-            title: "Close",
+        
+        alertController.addAction(UIAlertAction(
+            title: "Cancel",
             style: .cancel
         ))
-        present(ac, animated: true)
+        
+        present(alertController, animated: true)
     }
 
 }
