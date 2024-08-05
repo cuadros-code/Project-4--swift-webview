@@ -31,7 +31,6 @@ class DetailViewController: UIViewController, WKNavigationDelegate {
             action: #selector(opentapped)
         )
         
-        title = "Websites"
         
         let spacer = UIBarButtonItem(
             barButtonSystemItem: .flexibleSpace,
